@@ -1,5 +1,4 @@
 from typing import Literal
-from langchain.hub import pull
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
@@ -52,16 +51,19 @@ async def route_query(state: AgentState, *, config: RunnableConfig):
 
 
 async def retrieve_documents(state: AgentState, *, config: RunnableConfig):
-    configuration = Configuration.from_runnable_config(config)
-    retriever = make_retriever(configuration)
-    response = retriever.invoke(state["query"])
+    with make_retriever(config) as retriever:
+        response = retriever.invoke(state["query"])
     return {"documents": response}
 
 
 async def generate_response(state: AgentState, *, config: RunnableConfig):
     configuration = Configuration.from_runnable_config(config)
     context = format_docs(state["documents"])
-    prompt_template = pull("rlm/rag-prompt")
+    prompt_template = ChatPromptTemplate.from_template(
+        "Answer the question using only the following context. "
+        "If the answer is not in the context, say you do not know.\n\n"
+        "Context:\n{context}\n\nQuestion: {question}"
+    )
     formatted_prompt = prompt_template.invoke(
         {"context": context, "question": state["query"]})
     messages = formatted_prompt.messages + state["messages"]

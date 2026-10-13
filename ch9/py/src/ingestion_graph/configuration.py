@@ -39,7 +39,7 @@ class IndexConfiguration:
         Literal["supabase", "chroma"],
         {"__template_metadata__": {"kind": "retriever"}},
     ] = field(
-        default="chroma",
+        default="supabase",
         metadata={
             "description": "The vector store provider to use for retrieval. Options are 'supabase', or 'chroma'."
         },
